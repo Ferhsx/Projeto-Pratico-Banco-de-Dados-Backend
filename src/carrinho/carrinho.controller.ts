@@ -1,6 +1,3 @@
-
-//feito por lorrainy
-
 import { Request, Response } from "express";
 //import aqui as dependências necessárias
 import { ObjectId } from "bson";
@@ -110,8 +107,11 @@ class CarrinhoController {
         return res.status(200).json(carrinho);
     }
     //atualizarQuantidade
-    async atualizarQuantidade(req:Request, res:Response) {
-        const { usuarioId, produtoId, quantidade } = req.body;
+    async alterarQuantidade(req:AutenticacaoRequest, res:Response) {
+        const { produtoId, quantidade } = req.body;
+        if(!req.usuarioId)
+            return res.status(401).json({mensagem:"Usuário inválido!"})
+        const usuarioId = req.usuarioId
         const carrinho = await db.collection<Carrinho>("carrinhos").findOne({ usuarioId: usuarioId });
         if (!carrinho) {
             return res.status(404).json({ mensagem: "Carrinho não encontrado" });

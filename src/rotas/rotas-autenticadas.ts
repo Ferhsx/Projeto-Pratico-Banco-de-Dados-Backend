@@ -9,6 +9,7 @@ rotas.get('/produtos',produtosController.listar)
 
 rotas.post('/adicionarItem',carrinhoController.adicionarItem)
 rotas.post('/removerItem',carrinhoController.removerItem)
+rotas.put('/alterarQuantidade',carrinhoController.alterarQuantidade)
 rotas.get('/carrinho/:usuarioId',carrinhoController.listar)
 rotas.delete('/carrinho/:usuarioId',carrinhoController.remover)
 
