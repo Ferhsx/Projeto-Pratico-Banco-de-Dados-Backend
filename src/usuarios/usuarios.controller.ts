@@ -4,16 +4,25 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 class UsuariosController {
     async adicionar(req: Request, res: Response) {
-        const { nome, idade, email, senha } = req.body
+        const { nome, idade, email, senha, role = 'user' } = req.body
         if (!nome || !idade || !email || !senha)
             return res.status(400).json({ error: "Nome, idade, email e senha são obrigatórios" })
         if (senha.length < 6)
             return res.status(400).json({ error: "A senha deve ter no mínimo 6 caracteres" })
         if (!email.includes('@') || !email.includes('.'))
             return res.status(400).json({ error: "Email inválido" })
+        if (role !== 'user' && role !== 'admin')
+            return res.status(400).json({ error: "Tipo de usuário inválido. Use 'user' ou 'admin'" })
 
         const senhaCriptografada = await bcrypt.hash(senha, 10)
-        const usuario = { nome, idade, email, senha: senhaCriptografada }
+        const usuario = { 
+            nome, 
+            idade, 
+            email, 
+            senha: senhaCriptografada, 
+            role, 
+            dataCriacao: new Date() 
+        }
 
         const resultado = await db.collection('usuarios').insertOne(usuario)
         res.status(201).json({nome,idade,email,_id: resultado.insertedId })
@@ -37,9 +46,25 @@ class UsuariosController {
 
         if(!senhaValida) return res.status(401).json({mensagem:"Senha Incorreta!"})
 
-        //Gerar o token
-        const token = jwt.sign({usuarioId: usuario._id}, process.env.JWT_SECRET!, {expiresIn: '1h'})
-        res.status(200).json({token:token})
+        // Gerar o token com as informações do usuário
+        const token = jwt.sign(
+            {
+                usuarioId: usuario._id,
+                role: usuario.role || 'user' // Garante que sempre terá um valor padrão
+            }, 
+            process.env.JWT_SECRET || 'seu-segredo-seguro', // Usa um valor padrão para desenvolvimento
+            { expiresIn: '1h' }
+        )
+        
+        res.status(200).json({
+            token: token,
+            user: {
+                id: usuario._id,
+                nome: usuario.nome,
+                email: usuario.email,
+                role: usuario.role || 'user' // Garante que sempre terá um valor padrão
+            }
+        })
     }
 }
 
