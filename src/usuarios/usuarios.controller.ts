@@ -38,12 +38,22 @@ class UsuariosController {
 
         if(!senhaValida) return res.status(401).json({mensagem:"Senha Incorreta!"})
 
-        //Gerar o token
-        const token = jwt.sign({
-            usuarioId: usuario._id,
-            tipoUsuario: usuario.tipoUsuario // Inclui o tipo de usuário no token
-        }, process.env.JWT_SECRET!, {expiresIn: '1h'})
-        res.status(200).json({token:token, tipoUsuario: usuario.tipoUsuario})
+      // 1. **Definir o tipo de usuário (Se não estiver no banco, defina um default 'comum')**
+        // OBS: Você deve garantir que 'tipoUsuario' esteja salvo no banco no 'adicionar'
+        const tipoUsuario: 'admin' | 'comum' = usuario.tipoUsuario || 'comum';
+        
+        // 2. **Gerar o token, incluindo o tipoUsuario no payload**
+        const token = jwt.sign(
+            { usuarioId: usuario._id, tipoUsuario: tipoUsuario }, // <-- AQUI INCLUÍMOS O tipoUsuario
+            process.env.JWT_SECRET!,
+            { expiresIn: '1h' }
+        )
+
+        // 3. **Retornar o token E o tipoUsuario**
+        res.status(200).json({ 
+            token: token,
+            tipoUsuario: tipoUsuario // <-- AQUI RETORNAMOS O TIPO
+        })
     }
 }
 
