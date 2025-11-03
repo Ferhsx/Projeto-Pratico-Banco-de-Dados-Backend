@@ -52,7 +52,8 @@ class UsuariosController {
         // 3. **Retornar o token E o tipoUsuario**
         res.status(200).json({ 
             token: token,
-            tipoUsuario: tipoUsuario // <-- AQUI RETORNAMOS O TIPO
+            tipoUsuario: tipoUsuario, // <-- AQUI RETORNAMOS O TIPO
+            nome: usuario.nome
         })
     }
 }
