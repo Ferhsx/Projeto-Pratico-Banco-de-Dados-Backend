@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { Request, Response, NextFunction } from "express";
 interface AutenticacaoRequest extends Request {
     usuarioId?:string;
+    tipoUsuario?: 'admin' | 'comum';
 }
 
 function Auth(req:AutenticacaoRequest,res:Response,next:NextFunction){
@@ -18,8 +19,8 @@ function Auth(req:AutenticacaoRequest,res:Response,next:NextFunction){
             console.log(err)
             return res.status(401).json({mensagem:"Middleware erro token"})
         }
-        if(typeof decoded ==="string"||!decoded||!("usuarioId" in decoded)){
-            return res.status(401).json({mensagem:"Middleware erro decoded"})
+       if(typeof decoded ==="string"||!decoded||!("usuarioId" in decoded) || !("tipoUsuario" in decoded)){
+            return res.status(401).json({mensagem:"Middleware erro decoded ou faltando tipo de usuário"})
         }
         req.usuarioId = decoded.usuarioId
         next()

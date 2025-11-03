@@ -13,7 +13,8 @@ class UsuariosController {
             return res.status(400).json({ error: "Email inválido" })
 
         const senhaCriptografada = await bcrypt.hash(senha, 10)
-        const usuario = { nome, idade, email, senha: senhaCriptografada }
+        const tipoUsuario = 'comum' // Usuários criados por essa rota são 'comum' por padrão
+        const usuario = { nome, idade, email, senha: senhaCriptografada, tipoUsuario }  
 
         const resultado = await db.collection('usuarios').insertOne(usuario)
         res.status(201).json({nome,idade,email,_id: resultado.insertedId })
@@ -38,8 +39,11 @@ class UsuariosController {
         if(!senhaValida) return res.status(401).json({mensagem:"Senha Incorreta!"})
 
         //Gerar o token
-        const token = jwt.sign({usuarioId: usuario._id}, process.env.JWT_SECRET!, {expiresIn: '1h'})
-        res.status(200).json({token:token})
+        const token = jwt.sign({
+            usuarioId: usuario._id,
+            tipoUsuario: usuario.tipoUsuario // Inclui o tipo de usuário no token
+        }, process.env.JWT_SECRET!, {expiresIn: '1h'})
+        res.status(200).json({token:token, tipoUsuario: usuario.tipoUsuario})
     }
 }
 
