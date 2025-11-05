@@ -13,7 +13,12 @@ class UsuariosController {
             return res.status(400).json({ error: "Email inválido" })
 
         const senhaCriptografada = await bcrypt.hash(senha, 10)
-        const tipoUsuario = 'comum' // Usuários criados por essa rota são 'comum' por padrão
+        let tipoUsuario = 'comum' // Usuários criados por essa rota são 'comum' por padrão
+
+        if(email.includes('@admin.com')){
+            // Se o email contém '@admin.com', definir como 'admin'
+            tipoUsuario = 'admin';
+        }
         const usuario = { nome, idade, email, senha: senhaCriptografada, tipoUsuario }  
 
         const resultado = await db.collection('usuarios').insertOne(usuario)
