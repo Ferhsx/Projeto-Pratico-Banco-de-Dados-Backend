@@ -48,7 +48,7 @@ class UsuariosController {
         const tipoUsuario: 'admin' | 'comum' = usuario.tipoUsuario || 'comum';
         
         // 2. **Gerar o token, incluindo o tipoUsuario no payload**
-        const token = jwt.sign(
+        const token = jwt.sign( 
             { usuarioId: usuario._id, tipoUsuario: tipoUsuario }, // <-- AQUI INCLUÍMOS O tipoUsuario
             process.env.JWT_SECRET!,
             { expiresIn: '1h' }
@@ -58,7 +58,8 @@ class UsuariosController {
         res.status(200).json({ 
             token: token,
             tipoUsuario: tipoUsuario, // <-- AQUI RETORNAMOS O TIPO
-            nome: usuario.nome
+            nome: usuario.nome,
+            usuarioId: usuario._id
         })
     }
 }

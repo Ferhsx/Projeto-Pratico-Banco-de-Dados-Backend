@@ -10,9 +10,10 @@ app.use(cors())
 app.use(express.json())
 
 
-// Usando as rotas definidas em rotas.ts
+// Rotas que NÃO precisam de autenticação
 app.use(rotasNaoAutenticadas)
-app.use(Auth)
+
+// Rotas que PRECISAM de autenticação
 app.use(rotasAutenticadas)
 
 // Criando o servidor na porta 8000 com o express

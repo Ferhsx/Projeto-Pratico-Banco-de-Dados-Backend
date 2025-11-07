@@ -1,33 +1,26 @@
 import {Router} from 'express'
 // Importe AuthAdmin para proteger as rotas de administrador
 import AuthAdmin from '../middlewares/authAdmin.js' 
-
+import Auth from '../middlewares/auth.js';
 import carrinhoController from '../carrinho/carrinho.controller.js'
 import produtosController from '../produtos/produtos.controller.js'
 
 const rotas = Router()
 
+rotas.use(Auth)
 // --- ROTAS DE PRODUTOS ---
 
 // ADICIONAR Produto (POST /produtos) - AGORA PROTEGIDA POR ADMIN
-rotas.post('/produtos', AuthAdmin, produtosController.adicionar)
-
-// LISTAR Produtos (GET /produtos) - Acessível a qualquer usuário logado
-rotas.get('/produtos', produtosController.listar)
-
-// NOVO: EDITAR Produto (PUT /produtos/:id) - PROTEGIDA POR ADMIN
-// O :id é o ID do produto que será editado
-rotas.put('/produtos/:id', AuthAdmin, produtosController.atualizar) 
-
-// NOVO: EXCLUIR Produto (DELETE /produtos/:id) - PROTEGIDA POR ADMIN
-rotas.delete('/produtos/:id', AuthAdmin, produtosController.excluir) 
+rotas.post('/produtos', AuthAdmin, produtosController.adicionar);
+rotas.put('/produtos/:id', AuthAdmin, produtosController.atualizar); 
+rotas.delete('/produtos/:id', AuthAdmin, produtosController.excluir); 
 
 
-// --- ROTAS DE CARRINHO (Acessíveis a usuários logados, geralmente comuns) ---
-rotas.post('/adicionarItem',carrinhoController.adicionarItem)
-rotas.post('/removerItem',carrinhoController.removerItem)
-rotas.get('/carrinho/:usuarioId',carrinhoController.listar)
-rotas.delete('/carrinho/:usuarioId',carrinhoController.remover)
+// --- ROTAS DE CARRINHO (Agora estarão protegidas e terão acesso a req.usuarioId) ---
+rotas.post('/adicionarItem', carrinhoController.adicionarItem);
+rotas.post('/removerItem', carrinhoController.removerItem);
+rotas.get('/carrinho', carrinhoController.listar);
+rotas.delete('/carrinho/:usuarioId', carrinhoController.remover);
 
 
 export default rotas
