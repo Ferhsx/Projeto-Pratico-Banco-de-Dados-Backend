@@ -4,6 +4,7 @@ import AuthAdmin from '../middlewares/authAdmin.js'
 import Auth from '../middlewares/auth.js';
 import carrinhoController from '../carrinho/carrinho.controller.js'
 import produtosController from '../produtos/produtos.controller.js'
+import usuariosController from '../usuarios/usuarios.controller.js'
 
 const rotas = Router()
 
@@ -21,6 +22,10 @@ rotas.post('/adicionarItem', carrinhoController.adicionarItem);
 rotas.post('/removerItem', carrinhoController.removerItem);
 rotas.get('/carrinho', carrinhoController.listar);
 rotas.delete('/carrinho/:usuarioId', carrinhoController.remover);
+rotas.get('/carrinhos', carrinhoController.listarTodos);
+rotas.delete('/carrinho/por-id/:carrinhoId', AuthAdmin, carrinhoController.removerCarrinhoPorId)
+
+// --- ROTAS DE USUARIOS ---
 
 
 export default rotas
