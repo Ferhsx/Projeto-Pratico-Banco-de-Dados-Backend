@@ -5,6 +5,7 @@ import Auth from '../middlewares/auth.js';
 import carrinhoController from '../carrinho/carrinho.controller.js'
 import produtosController from '../produtos/produtos.controller.js'
 import usuariosController from '../usuarios/usuarios.controller.js'
+import adminController from '../admin/admin.controller.js'
 
 const rotas = Router()
 
@@ -27,5 +28,9 @@ rotas.delete('/carrinho/por-id/:carrinhoId', AuthAdmin, carrinhoController.remov
 
 // --- ROTAS DE USUARIOS ---
 
+
+// --- ROTAS DE ADMIN ---
+
+rotas.get('/admin/dashboard', AuthAdmin, adminController.getDashboardStats);
 
 export default rotas
