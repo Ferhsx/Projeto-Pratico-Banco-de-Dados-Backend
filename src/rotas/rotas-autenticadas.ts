@@ -28,7 +28,7 @@ rotas.get('/carrinho', carrinhoController.listar);
 rotas.delete('/carrinho', carrinhoController.remover); 
 
 // <-- 2. ROTA ADICIONADA (para a Tarefa B2)
-rotas.patch('/atualizar-quantidade', carrinhoController.atualizarQuantidade);
+rotas.patch('/alterarQuantidade', carrinhoController.atualizarQuantidade);
 
 // --- ROTAS DE ADMIN ---
 // Essas rotas são protegidas primeiro pelo 'Auth' e DEPOIS pelo 'AuthAdmin'
