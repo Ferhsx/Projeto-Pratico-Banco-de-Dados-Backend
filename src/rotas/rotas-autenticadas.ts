@@ -9,28 +9,31 @@ import adminController from '../admin/admin.controller.js'
 
 const rotas = Router()
 
-rotas.use(Auth)
-// --- ROTAS DE PRODUTOS ---
+// Isso protege TODAS as rotas abaixo com autenticação 'Auth'
+rotas.use(Auth) 
 
+// --- ROTAS DE PRODUTOS ---
 // ADICIONAR Produto (POST /produtos) - AGORA PROTEGIDA POR ADMIN
 rotas.post('/produtos', AuthAdmin, produtosController.adicionar);
 rotas.put('/produtos/:id', AuthAdmin, produtosController.atualizar); 
 rotas.delete('/produtos/:id', AuthAdmin, produtosController.excluir); 
 
 
-// --- ROTAS DE CARRINHO (Agora estarão protegidas e terão acesso a req.usuarioId) ---
+// --- ROTAS DE CARRINHO (Protegidas pelo rotas.use(Auth) acima) ---
 rotas.post('/adicionarItem', carrinhoController.adicionarItem);
 rotas.post('/removerItem', carrinhoController.removerItem);
 rotas.get('/carrinho', carrinhoController.listar);
-rotas.delete('/carrinho/:usuarioId', carrinhoController.remover);
-rotas.get('/carrinhos', carrinhoController.listarTodos);
-rotas.delete('/carrinho/por-id/:carrinhoId', AuthAdmin, carrinhoController.removerCarrinhoPorId)
 
-// --- ROTAS DE USUARIOS ---
+// <-- 1. ROTA CORRIGIDA (para remover o próprio carrinho)
+rotas.delete('/carrinho', carrinhoController.remover); 
 
+// <-- 2. ROTA ADICIONADA (para a Tarefa B2)
+rotas.patch('/atualizar-quantidade', carrinhoController.atualizarQuantidade);
 
 // --- ROTAS DE ADMIN ---
-
+// Essas rotas são protegidas primeiro pelo 'Auth' e DEPOIS pelo 'AuthAdmin'
+rotas.get('/carrinhos', AuthAdmin, carrinhoController.listarTodos);
+rotas.delete('/carrinho/por-id/:carrinhoId', AuthAdmin, carrinhoController.removerCarrinhoPorId)
 rotas.get('/admin/dashboard', AuthAdmin, adminController.getDashboardStats);
 
 export default rotas
