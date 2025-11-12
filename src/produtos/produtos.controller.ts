@@ -9,16 +9,26 @@ class ProdutosController {
     
     // --- FUNÇÃO ADICIONAR (Mantida, mas esta rota será protegida por AuthAdmin) ---
     async adicionar(req: Request, res: Response) {
-        const { nome, preco, urlfoto, descricao } = req.body
+        //adicionar isfeature para deixar em destaque
+        const { nome, preco, urlfoto, descricao, isFeature = false } = req.body
         if (!nome || !preco || !urlfoto || !descricao)
             return res.status(400).json({ error: "Nome, preço, urlfoto e descrição são obrigatórios" })
             
         // Converter preço para número se necessário, antes de salvar
-        const produto = { nome, preco: Number(preco), urlfoto, descricao } 
+        const produto = { nome, 
+            preco: Number(preco), 
+            urlfoto, 
+            descricao, 
+            isFeature 
+        }
+
+        if (preco > 350) {
+            produto.isFeature = true
+        }
         
         try {
             const resultado = await db.collection('produtos').insertOne(produto)
-            res.status(201).json({ nome, preco, urlfoto, descricao, _id: resultado.insertedId })
+            res.status(201).json({ ...produto, _id: resultado.insertedId })
         } catch (error) {
             res.status(500).json({ mensagem: "Erro ao adicionar produto." })
         }
