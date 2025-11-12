@@ -10,7 +10,7 @@ class ProdutosController {
     // --- FUNÇÃO ADICIONAR (Mantida, mas esta rota será protegida por AuthAdmin) ---
     async adicionar(req: Request, res: Response) {
         //adicionar isfeature para deixar em destaque
-        const { nome, preco, urlfoto, descricao, isFeature = false } = req.body
+        const { nome, preco, urlfoto, descricao, isFeatured = false } = req.body
         if (!nome || !preco || !urlfoto || !descricao)
             return res.status(400).json({ error: "Nome, preço, urlfoto e descrição são obrigatórios" })
 
@@ -20,11 +20,11 @@ class ProdutosController {
             preco: Number(preco),
             urlfoto,
             descricao,
-            isFeature
+            isFeatured
         }
 
         if (preco > 350) {
-            produto.isFeature = true
+            produto.isFeatured = true
         }
 
         try {
