@@ -3,29 +3,30 @@
 import { Request, Response } from 'express'
 import { db } from '../database/banco-mongo.js'
 // Importar ObjectId para manipular IDs do MongoDB
-import { ObjectId } from 'mongodb' 
+import { ObjectId } from 'mongodb'
 
 class ProdutosController {
-    
+
     // --- FUNÇÃO ADICIONAR (Mantida, mas esta rota será protegida por AuthAdmin) ---
     async adicionar(req: Request, res: Response) {
         //adicionar isfeature para deixar em destaque
         const { nome, preco, urlfoto, descricao, isFeature = false } = req.body
         if (!nome || !preco || !urlfoto || !descricao)
             return res.status(400).json({ error: "Nome, preço, urlfoto e descrição são obrigatórios" })
-            
+
         // Converter preço para número se necessário, antes de salvar
-        const produto = { nome, 
-            preco: Number(preco), 
-            urlfoto, 
-            descricao, 
-            isFeature 
+        const produto = {
+            nome,
+            preco: Number(preco),
+            urlfoto,
+            descricao,
+            isFeature
         }
 
         if (preco > 350) {
             produto.isFeature = true
         }
-        
+
         try {
             const resultado = await db.collection('produtos').insertOne(produto)
             res.status(201).json({ ...produto, _id: resultado.insertedId })
@@ -33,11 +34,17 @@ class ProdutosController {
             res.status(500).json({ mensagem: "Erro ao adicionar produto." })
         }
     }
-    
+
     // --- FUNÇÃO LISTAR (Mantida) ---
     async listar(req: Request, res: Response) {
         const produtos = await db.collection('produtos').find().toArray()
         res.status(200).json(produtos)
+    }
+    async listarPorId(req: Request, res: Response) {
+        const { id } = req.params
+        const produto = await db.collection('produtos').findOne({ _id: new ObjectId(id) })
+        if (!produto) return res.status(404).json({ mensagem: "Produto não encontrado." })
+        res.status(200).json(produto)
     }
 
     /**
@@ -47,7 +54,7 @@ class ProdutosController {
     async atualizar(req: Request, res: Response) {
         const { id } = req.params // ID do produto na URL
         const novosDados = req.body
-        
+
         if (!id) return res.status(400).json({ mensagem: "ID do produto é obrigatório." })
 
         try {
@@ -60,7 +67,7 @@ class ProdutosController {
             // O $set garante que apenas os campos fornecidos no body serão atualizados
             const resultado = await db.collection('produtos').updateOne(
                 { _id: objectId },
-                { $set: novosDados } 
+                { $set: novosDados }
             )
 
             if (resultado.matchedCount === 0) {
@@ -94,7 +101,7 @@ class ProdutosController {
             }
 
             // 204 No Content: Resposta de sucesso sem conteúdo de retorno
-            res.status(204).send() 
+            res.status(204).send()
 
         } catch (error) {
             res.status(500).json({ mensagem: "Erro ao excluir produto ou formato de ID inválido." })

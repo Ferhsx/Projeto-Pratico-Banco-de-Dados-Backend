@@ -12,7 +12,7 @@ app.use(express.json())
 
 // Rotas que NÃO precisam de autenticação
 app.use(rotasNaoAutenticadas)
-
+app.use(Auth)
 // Rotas que PRECISAM de autenticação
 app.use(rotasAutenticadas)
 
