@@ -19,9 +19,9 @@ const port = process.env.PORT || 8000;
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? [
+        'https://projeto-pratico-frameworks-frontend-2ht7wz5h4-ferculus-projects.vercel.app',
         'https://projeto-pratico-frameworks-frontend.vercel.app',
-        'https://projeto-pratico-frameworks-frontend-git-main-ferhsx.vercel.app',
-        'https://projeto-pratico-frameworks-frontend.vercel.app'
+        'https://projeto-pratico-frameworks-frontend-git-main-ferhsx.vercel.app'
       ] 
     : ['http://localhost:3000', 'https://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
