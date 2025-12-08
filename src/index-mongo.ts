@@ -82,20 +82,32 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Inicialização do servidor
 if (process.env.NODE_ENV === 'production') {
-  // Em produção, use HTTPS com certificado real
+  // Em produção, use HTTP (o Render já lida com HTTPS)
   app.listen(port, () => {
     console.log(`Servidor rodando em produção na porta ${port}`);
   });
 } else {
-  // Em desenvolvimento, use HTTPS com certificado autoassinado
+  // Apenas em desenvolvimento, use HTTPS com certificado autoassinado
   const certsPath = path.join(__dirname, '..', 'certs');
-  const httpsOptions = {
-    key: fs.readFileSync(path.join(certsPath, 'key.pem')),
-    cert: fs.readFileSync(path.join(certsPath, 'cert.pem'))
-  };
+  const keyPath = path.join(certsPath, 'key.pem');
+  const certPath = path.join(certsPath, 'cert.pem');
   
-  https.createServer(httpsOptions, app).listen(port, () => {
-    console.log(`Servidor HTTPS de desenvolvimento rodando na porta ${port}`);
-    console.log('Acesse: https://localhost:' + port);
-  });
+  // Verifica se os arquivos de certificado existem
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    const httpsOptions = {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath)
+    };
+    
+    https.createServer(httpsOptions, app).listen(port, () => {
+      console.log(`Servidor HTTPS de desenvolvimento rodando na porta ${port}`);
+      console.log('Acesse: https://localhost:' + port);
+    });
+  } else {
+    console.warn('Certificados não encontrados. Iniciando servidor HTTP...');
+    app.listen(port, () => {
+      console.log(`Servidor HTTP de desenvolvimento rodando na porta ${port}`);
+      console.log('Acesse: http://localhost:' + port);
+    });
+  }
 }
