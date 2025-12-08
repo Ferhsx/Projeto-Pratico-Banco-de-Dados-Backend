@@ -18,7 +18,11 @@ const port = process.env.PORT || 8000;
 // Configuração do CORS
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://seu-dominio.com'] 
+    ? [
+        'https://projeto-pratico-frameworks-frontend.vercel.app',
+        'https://projeto-pratico-frameworks-frontend-git-main-ferhsx.vercel.app',
+        'https://projeto-pratico-frameworks-frontend.vercel.app'
+      ] 
     : ['http://localhost:3000', 'https://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
