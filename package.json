@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/index-mongo.ts",
     "dev:mongo": "tsx watch src/index-mongo.ts",
-    "build": "npm install && tsc",
+    "build": "npm install && tsc -p tsconfig.build.json",
     "start": "node dist/index-mongo.js",
     "test": "jest --watch"
   },
