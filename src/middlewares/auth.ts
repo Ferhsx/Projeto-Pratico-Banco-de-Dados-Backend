@@ -1,14 +1,14 @@
 import jwt, { JwtPayload } from 'jsonwebtoken'
 // Importe Request, Response e NextFunction do Express
 import { Request, Response, NextFunction } from "express"; 
-
-// A interface deve estender Request sem modificadores genéricos no TS mais moderno
-// Se precisar de acesso fácil a Params, use Request<any> ou Request<Record<string, any>>
-// No entanto, estender Request (sem generics) já deve funcionar na maioria dos casos.
-export interface AutenticacaoRequest extends Request {
-    // Adicionando as propriedades personalizadas:
+// Usamos Request<Params, ResBody, ReqBody, ReqQuery>
+// Se você não tipa params/body/query explicitamente, use 'any' para herdar a tipagem
+export interface AutenticacaoRequest extends Request<any, any, any, any> { 
     usuarioId?: string;
     tipoUsuario?: 'admin' | 'comum';
+    // Não precisa declarar body e headers se você estender Request<...>
+    // body: any; 
+    // headers: any; 
 }
 
 function Auth(req: AutenticacaoRequest, res: Response, next: NextFunction) {
