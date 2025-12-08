@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["node"]
+    "types": ["node", "express", "cors", "jsonwebtoken", "bcrypt", "body-parser"]
   },
   "exclude": ["**/*.test.ts", "**/*.spec.ts"]
 }

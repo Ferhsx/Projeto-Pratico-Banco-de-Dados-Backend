@@ -1,11 +1,11 @@
-// auth.ts
-
-import jwt from 'jsonwebtoken'
+import jwt, { JwtPayload } from 'jsonwebtoken'
 import { Request, Response, NextFunction } from "express";
 
-interface AutenticacaoRequest extends Request {
+export interface AutenticacaoRequest extends Request {
     usuarioId?: string;
     tipoUsuario?: 'admin' | 'comum';
+    body: any;  // Adicionando a propriedade body
+    headers: any; // Adicionando a propriedade headers
 }
 
 function Auth(req: AutenticacaoRequest, res: Response, next: NextFunction) {
@@ -18,32 +18,14 @@ function Auth(req: AutenticacaoRequest, res: Response, next: NextFunction) {
 
     const token = authHeaders.split(" ")[1]!
 
-    jwt.verify(token, process.env.JWT_SECRET!, (err, decoded) => {
-        if (err) {
-            console.log(err)
-            return res.status(401).json({ mensagem: "Middleware erro token" })
-        }
-        
-        // 1. **Verificação de segurança e tipo**
-        // Garantimos que 'decoded' é um objeto e possui os campos obrigatórios.
-        if (typeof decoded === "string" || !decoded || !("usuarioId" in decoded) || !("tipoUsuario" in decoded)) {
-            return res.status(401).json({ mensagem: "Token inválido ou faltando dados essenciais (usuarioId ou tipoUsuario)." })
-        }
-
-        // 2. **Atribuição Correta**
-        // Os dados decodificados são atribuídos diretamente ao objeto req.
-        
-        // Certifica-se que o tipoUsuario é 'admin' ou 'comum', caso contrário, atribui 'comum'
-        const decodedTipoUsuario = (decoded.tipoUsuario === 'admin' || decoded.tipoUsuario === 'comum') 
-            ? decoded.tipoUsuario 
-            : 'comum';
-            
-        req.usuarioId = decoded.usuarioId as string;
-        req.tipoUsuario = decodedTipoUsuario; // <-- ATRIBUIÇÃO CORRETA
-        
-        next()
-    })
-
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+        req.usuarioId = decoded.id;
+        req.tipoUsuario = decoded.tipoUsuario;
+        next();
+    } catch (error) {
+        return res.status(401).json({ mensagem: "Token inválido" });
+    }
 }
 
 export default Auth;
