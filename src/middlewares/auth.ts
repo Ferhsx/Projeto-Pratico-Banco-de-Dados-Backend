@@ -1,4 +1,5 @@
-import jwt, { JwtPayload } from 'jsonwebtoken'
+import * as jwt from 'jsonwebtoken';
+import type { JwtPayload } from 'jsonwebtoken';
 // Importe Request, Response e NextFunction do Express
 import { Request, Response, NextFunction } from "express"; 
 // Usamos Request<Params, ResBody, ReqBody, ReqQuery>
