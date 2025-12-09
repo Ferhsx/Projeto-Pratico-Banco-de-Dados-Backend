@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { ObjectId } from "bson";
 import { db } from "../database/banco-mongo.js";
-import { AutenticacaoRequest } from '../middlewares/auth.js';
 
 interface ItemCarrinho {
     produtoId: string;
@@ -15,6 +14,10 @@ interface Carrinho {
     itens: ItemCarrinho[];
     dataAtualizacao: Date;
     total: number;
+}
+
+interface AutenticacaoRequest extends Request {
+    usuarioId?: string;
 }
 
 class CarrinhoController {
@@ -205,7 +208,7 @@ class CarrinhoController {
         }
     }
 
-    removerCarrinhoPorId = async (req: AutenticacaoRequest, res: Response) => {
+    removerCarrinhoPorId = async (req: Request, res: Response) => {
         try {
             const { carrinhoId } = req.params;
 
@@ -233,7 +236,7 @@ class CarrinhoController {
         }
     }
 
-    listarTodos = async (req: AutenticacaoRequest, res: Response) => {
+    listarTodos = async (req: Request, res: Response) => {
         try {
             // Passo 1: Buscar todos os documentos da coleção de carrinhos.
             const todosOsCarrinhos = await db.collection('carrinhos').find().toArray();

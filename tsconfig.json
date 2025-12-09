@@ -7,20 +7,20 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "node16", 
-    "target": "ES2022", 
-    "moduleResolution": "node16",
-    "esModuleInterop": true,
+    "module": "nodenext",
+    "target": "esnext",
+    "moduleResolution": "nodenext",
     //"types": [],
     // For nodejs:
     // "lib": ["esnext"],
     "types": [
-      "node"
+      "node",
+      "jest"
     ],
     // and npm install -D @types/node
 
     // Other Outputs
-    "sourceMap": true,  
+    "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
 
