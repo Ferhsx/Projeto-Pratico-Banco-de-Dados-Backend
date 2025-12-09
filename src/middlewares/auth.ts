@@ -2,14 +2,11 @@ import * as jwt from 'jsonwebtoken';
 import type { JwtPayload } from 'jsonwebtoken';
 // Importe Request, Response e NextFunction do Express
 import { Request, Response, NextFunction } from "express"; 
-// Usamos Request<Params, ResBody, ReqBody, ReqQuery>
-// Se você não tipa params/body/query explicitamente, use 'any' para herdar a tipagem
+
+// Isso garante que body, params e headers sejam herdados.
 export interface AutenticacaoRequest extends Request<any, any, any, any> { 
     usuarioId?: string;
     tipoUsuario?: 'admin' | 'comum';
-    // Não precisa declarar body e headers se você estender Request<...>
-    // body: any; 
-    // headers: any; 
 }
 
 function Auth(req: AutenticacaoRequest, res: Response, next: NextFunction) {
