@@ -132,6 +132,7 @@ rotas.patch('/usuarios/:usuarioId/tipo', AuthAdmin, usuariosController.atualizar
 rotas.get('/carrinhos', AuthAdmin, carrinhoController.listarTodos);
 rotas.get('/produtos', AuthAdmin, produtosController.listar);
 rotas.get('/admin/dashboard', AuthAdmin, adminController.getDashboardStats);
+rotas.get('/admin/usuarios', AuthAdmin, usuariosController.listar);
 
 
 export default rotas;
