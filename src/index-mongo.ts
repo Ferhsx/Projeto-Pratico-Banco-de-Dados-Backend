@@ -70,6 +70,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Rotas que NÃO precisam de autenticação
 app.use(rotasNaoAutenticadas);
 
@@ -78,11 +82,6 @@ app.use(Auth);
 
 // Rotas que PRECISAM de autenticação
 app.use(rotasAutenticadas);
-
-// Rota de verificação de saúde
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 // Tratamento de erros global
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
