@@ -19,9 +19,18 @@ const port = process.env.PORT || 8000;
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? [
+        // 1. Domínio Principal (https)
         'https://projeto-pratico-frameworks-frontend.vercel.app',
+        
+        // 2. Domínio de Preview Atual (https) 👈 NOVO ENDEREÇO
+        'https://projeto-pratico-frameworks-frontend-ewa9ucvzp-ferculus-projects.vercel.app',
+        
+        // 3. Domínio de Preview Antigo (opcional, mas seguro manter)
         'https://projeto-pratico-frameworks-frontend-git-main-ferhsx.vercel.app',
-        'https://projeto-pratico-frameworks-frontend.vercel.app'
+        
+        // 4. Versões HTTP (para garantir interoperabilidade)
+        'http://projeto-pratico-frameworks-frontend.vercel.app',
+        'http://projeto-pratico-frameworks-frontend-ewa9ucvzp-ferculus-projects.vercel.app',
       ] 
     : ['http://localhost:3000', 'https://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
