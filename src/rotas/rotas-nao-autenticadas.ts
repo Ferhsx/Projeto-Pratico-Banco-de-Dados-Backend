@@ -12,8 +12,8 @@ const rotas = Router()
 // Configuração especial para o webhook do Stripe (precisa do body raw)
 const stripeWebhookRouter = Router()
 stripeWebhookRouter.post('/webhook', 
-    bodyParser.raw({ type: 'application/json' }), 
-    handleStripeWebhook
+    bodyParser.raw({ type: 'application/json' }), 
+    handleStripeWebhook
 )
 rotas.use(stripeWebhookRouter)
 
@@ -33,12 +33,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '')
 
 
 rotas.post('/create-payment-intent', async (req, res) => {
-    const { amount, currency = 'brl' } = req.body
-    if (!amount) return res.status(400).json({ error: 'amount is required' })
-    try {
-        const paymentIntent = await stripe.paymentIntents.create({ amount, currency })
-        return res.json({ clientSecret: paymentIntent.client_secret })
-    } catch (err) {
+    const { amount, currency = 'brl' } = req.body
+    if (!amount) return res.status(400).json({ error: 'amount is required' })
+    try {
+        const paymentIntent = await stripe.paymentIntents.create({ amount, currency })
+        return res.json({ clientSecret: paymentIntent.client_secret })
+    } catch (err) {
     return res.status(500).json({ error: (err as Error).message })
 }
 })
