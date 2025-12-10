@@ -63,6 +63,7 @@ class AdminController {
             res.status(500).json({ mensagem: "Erro interno do servidor ao gerar dashboard." });
         }
     }
+
 }
 
 export default new AdminController();

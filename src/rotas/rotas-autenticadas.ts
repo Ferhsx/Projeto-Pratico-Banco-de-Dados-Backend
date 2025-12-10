@@ -4,6 +4,7 @@ import Auth from '../middlewares/auth.js';
 import adminController from '../admin/admin.controller.js';
 import carrinhoController from '../carrinho/carrinho.controller.js';
 import produtosController from '../produtos/produtos.controller.js';
+import usuariosController from '../usuarios/usuarios.controller.js';
 import { getDb } from '../database/banco-mongo.js'; 
 
 const rotas = Router();
@@ -123,6 +124,9 @@ rotas.post('/criar-pagamento-cartao', async (req, res) => {
 rotas.post('/produtos', AuthAdmin, produtosController.adicionar);
 rotas.put('/produtos/:id', AuthAdmin, produtosController.atualizar); 
 rotas.delete('/produtos/:id', AuthAdmin, produtosController.excluir); 
+
+// --- ROTAS DE USUÁRIOS (ADMIN) ---
+rotas.patch('/usuarios/:usuarioId/tipo', AuthAdmin, usuariosController.atualizarTipoUsuario);
 
 // --- ROTAS DE ADMIN ---
 rotas.get('/carrinhos', AuthAdmin, carrinhoController.listarTodos);
