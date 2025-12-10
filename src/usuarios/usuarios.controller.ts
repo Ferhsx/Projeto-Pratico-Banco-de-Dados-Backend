@@ -3,54 +3,68 @@ import { getDb } from '../database/banco-mongo.js'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { ObjectId } from 'bson'
+
+// Interface para tipar o payload do token corretamente
+interface TokenPayload {
+    usuarioId: string;
+    tipoUsuario: string;
+}
+
 class UsuariosController {
+    
+    // --- CADASTRO (ADICIONAR) ---
     async adicionar(req: Request, res: Response) {
         const { nome, idade, email, senha, tipoUsuario } = req.body;
         
+        // Validações básicas
         if (!nome || !idade || !email || !senha) {
             return res.status(400).json({ error: "Nome, idade, email e senha são obrigatórios" });
         }
         if (senha.length < 6) {
             return res.status(400).json({ error: "A senha deve ter no mínimo 6 caracteres" });
         }
-        if (!email.includes('@') || !email.includes('.')) {
-            return res.status(400).json({ error: "Email inválido" });
-        }
-
-        // Verifica se já existe um usuário com o mesmo email
+        
         const { db } = await getDb();
         const usuarioExistente = await db.collection('usuarios').findOne({ email });
+        
         if (usuarioExistente) {
             return res.status(400).json({ error: "Email já cadastrado" });
         }
 
         const senhaCriptografada = await bcrypt.hash(senha, 10);
         
-        // Por padrão, novos usuários são 'comum'
+        // Objeto base do usuário
         const novoUsuario = { 
             nome, 
             idade, 
             email, 
             senha: senhaCriptografada, 
-            tipoUsuario: 'comum' 
+            tipoUsuario: 'comum', // Padrão seguro
+            criadoEm: new Date()
         };
 
-        // Se estiver tentando criar um admin, verifica se o solicitante é admin
+        // Lógica para criar ADMIN
         if (tipoUsuario === 'admin') {
             const token = req.headers.authorization?.split(' ')[1];
+            
+            // Se não tiver token, barra imediatamente
             if (!token) {
-                return res.status(401).json({ error: "Token de autenticação não fornecido" });
+                // Se for o PRIMEIRO admin, isso aqui impede. 
+                // Solução: Crie como 'comum' e mude no banco, ou remova essa trava apenas no primeiro setup.
+                return res.status(401).json({ error: "Criação de admin requer autenticação de outro admin." });
             }
 
             try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { id: string };
-                const usuarioAdmin = await db.collection('usuarios').findOne({ _id: new ObjectId(decoded.id) });
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as TokenPayload;
+                
+                // 🚨 CORREÇÃO AQUI: Usar 'usuarioId' em vez de 'id'
+                const usuarioAdmin = await db.collection('usuarios').findOne({ _id: new ObjectId(decoded.usuarioId) });
                 
                 if (!usuarioAdmin || usuarioAdmin.tipoUsuario !== 'admin') {
                     return res.status(403).json({ error: "Apenas administradores podem criar novos administradores" });
                 }
                 
-                // Se chegou aqui, é um admin válido criando outro admin
+                // Autorizado!
                 novoUsuario.tipoUsuario = 'admin';
             } catch (error) {
                 return res.status(401).json({ error: "Token inválido ou expirado" });
@@ -58,96 +72,89 @@ class UsuariosController {
         }
 
         const resultado = await db.collection('usuarios').insertOne(novoUsuario);
+        
+        // Remove a senha do retorno
         const { senha: _, ...usuarioSemSenha } = novoUsuario;
         res.status(201).json({ ...usuarioSemSenha, _id: resultado.insertedId });
     }
 
+    // --- PROMOVER/REBAIXAR USUÁRIO ---
     async atualizarTipoUsuario(req: Request, res: Response) {
         const { usuarioId } = req.params;
         const { tipoUsuario } = req.body;
 
         if (!tipoUsuario || !['admin', 'comum'].includes(tipoUsuario)) {
-            return res.status(400).json({ error: "Tipo de usuário inválido" });
+            return res.status(400).json({ error: "Tipo de usuário inválido. Use 'admin' ou 'comum'." });
         }
 
+        // Essa função deve ser protegida por rota, mas se validar aqui também, ok.
+        // O ideal é usar o middleware AuthAdmin na rota, mas vamos corrigir sua lógica manual:
         const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return res.status(401).json({ error: "Token de autenticação não fornecido" });
-        }
+        if (!token) return res.status(401).json({ error: "Token necessário" });
 
         try {
             const { db } = await getDb();
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as TokenPayload;
             
-            // Verifica se quem está fazendo a requisição é admin
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { id: string };
-            const usuarioAdmin = await db.collection('usuarios').findOne({ _id: new ObjectId(decoded.id) });
+            // 🚨 CORREÇÃO AQUI: Usar 'usuarioId'
+            const usuarioAdmin = await db.collection('usuarios').findOne({ _id: new ObjectId(decoded.usuarioId) });
             
             if (!usuarioAdmin || usuarioAdmin.tipoUsuario !== 'admin') {
-                return res.status(403).json({ error: "Apenas administradores podem alterar tipos de usuário" });
+                return res.status(403).json({ error: "Apenas admins podem fazer isso." });
             }
 
-            // Atualiza o tipo do usuário
             const resultado = await db.collection('usuarios').updateOne(
                 { _id: new ObjectId(usuarioId) },
                 { $set: { tipoUsuario } }
             );
 
-            if (resultado.matchedCount === 0) {
-                return res.status(404).json({ error: "Usuário não encontrado" });
-            }
+            if (resultado.matchedCount === 0) return res.status(404).json({ error: "Usuário alvo não encontrado" });
 
-            res.status(200).json({ mensagem: "Tipo de usuário atualizado com sucesso" });
+            res.status(200).json({ mensagem: `Usuário atualizado para ${tipoUsuario}` });
+
         } catch (error) {
-            if (error instanceof Error) {
-                if (error.name === 'JsonWebTokenError') {
-                    return res.status(401).json({ error: "Token inválido" });
-                }
-                if (error.name === 'TokenExpiredError') {
-                    return res.status(401).json({ error: "Token expirado" });
-                }
-            }
-            res.status(500).json({ error: "Erro ao atualizar tipo de usuário" });
+            res.status(500).json({ error: "Erro interno ou token inválido" });
         }
     }
-    async listar(req: Request, res: Response) {
-        const { db } = await getDb();
-        const usuarios = await db.collection('usuarios').find().toArray()
-        const usuariosSemSenha = usuarios.map(({ senha, ...resto }) => resto)
-        res.status(200).json(usuariosSemSenha)
-    }
 
+    // --- LOGIN ---
     async login(req: Request, res: Response) {
         const {email, senha} = req.body
-        if(!email || !senha) return res.status(400).json({mensagem:"Email e senha são obrigatórios!"})
+        if(!email || !senha) return res.status(400).json({mensagem:"Dados incompletos"})
     
-        //Como verificar se o usuário tem acesso ou não?
         const { db } = await getDb();
         const usuario = await db.collection('usuarios').findOne({email})
 
-        if(!usuario) return res.status(401).json({mensagem:"Usuário Incorreto!"})
+        if(!usuario) return res.status(401).json({mensagem:"Credenciais inválidas"})
         
         const senhaValida = await bcrypt.compare(senha, usuario.senha)
+        if(!senhaValida) return res.status(401).json({mensagem:"Credenciais inválidas"})
 
-        if(!senhaValida) return res.status(401).json({mensagem:"Senha Incorreta!"})
-
-      // 1. **Definir o tipo de usuário (Se não estiver no banco, defina um default 'comum')**
-        // OBS: Você deve garantir que 'tipoUsuario' esteja salvo no banco no 'adicionar'
-        const tipoUsuario: 'admin' | 'comum' = usuario.tipoUsuario || 'comum';
+        const tipoUsuario = usuario.tipoUsuario || 'comum';
         
-        // 2. **Gerar o token, incluindo o tipoUsuario no payload**
+        // Gera o token
         const token = jwt.sign( 
-            { usuarioId: usuario._id, tipoUsuario: tipoUsuario }, // <-- AQUI INCLUÍMOS O tipoUsuario
+            { usuarioId: usuario._id, tipoUsuario: tipoUsuario }, 
             process.env.JWT_SECRET!,
             { expiresIn: '1h' }
         )
 
-        // 3. **Retornar o token E o tipoUsuario**
         res.status(200).json({ 
             token: token,
-            tipoUsuario: tipoUsuario, // <-- AQUI RETORNAMOS O TIPO
+            tipoUsuario: tipoUsuario,
             nome: usuario.nome,
             usuarioId: usuario._id
         })
+    }
+    
+    // --- LISTAR ---
+    async listar(req: Request, res: Response) {
+        // ... (seu código estava ok aqui)
+        const { db } = await getDb();
+        const usuarios = await db.collection('usuarios').find().toArray()
+        // Remove senha de todos
+        const usuariosSemSenha = usuarios.map(({ senha, ...resto }) => resto)
+        res.status(200).json(usuariosSemSenha)
     }
 }
 
