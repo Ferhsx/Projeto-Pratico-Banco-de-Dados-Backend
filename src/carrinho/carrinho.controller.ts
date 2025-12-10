@@ -229,6 +229,7 @@ class CarrinhoController {
                 return res.status(400).json({ mensagem: "ID do carrinho inválido." });
             }
 
+            const { db } = await getDb();
             const resultado = await db.collection("carrinhos").deleteOne({ _id: objectId });
 
             if (resultado.deletedCount === 0) {
@@ -244,6 +245,8 @@ class CarrinhoController {
 
     listarTodos = async (req: Request, res: Response) => {
         try {
+            const { db } = await getDb();
+            
             // Passo 1: Buscar todos os documentos da coleção de carrinhos.
             const todosOsCarrinhos = await db.collection('carrinhos').find().toArray();
 
@@ -253,7 +256,14 @@ class CarrinhoController {
             }
 
             // Passo 2: Criar um array apenas com os IDs dos usuários, convertendo para ObjectId.
-            const idsDosUsuarios = todosOsCarrinhos.map(carrinho => new ObjectId(carrinho.usuarioId));
+            const idsDosUsuarios = todosOsCarrinhos
+                .filter(carrinho => carrinho.usuarioId) // Filtra carrinhos com usuarioId válido
+                .map(carrinho => new ObjectId(carrinho.usuarioId));
+
+            // Se não houver IDs de usuários válidos, retornar os carrinhos sem informações adicionais
+            if (idsDosUsuarios.length === 0) {
+                return res.status(200).json(todosOsCarrinhos);
+            }
 
             // Passo 3: Fazer uma ÚNICA busca na coleção de usuários para pegar todos os donos dos carrinhos.
             // O operador "$in" busca todos os documentos cujo _id está na nossa lista de IDs.
@@ -264,10 +274,15 @@ class CarrinhoController {
             // Passo 4: Criar um "mapa" para facilitar a busca do nome do usuário pelo seu ID.
             // Isso é muito mais rápido do que procurar no array de usuários a cada iteração.
             const mapaDeUsuarios = new Map(
-                usuariosDonos.map(user => [user._id.toString(), user.nome]),
+                usuariosDonos
+                    .filter(user => user && user._id && user.nome)
+                    .map(user => [user._id.toString(), user.nome])
             );
+            
             const mapaDeEmails = new Map(
-                usuariosDonos.map(user => [user._id.toString(), user.email])
+                usuariosDonos
+                    .filter(user => user && user._id && user.email)
+                    .map(user => [user._id.toString(), user.email])
             );
 
             // Passo 5: Juntar os dados.
