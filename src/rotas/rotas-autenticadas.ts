@@ -139,6 +139,6 @@ rotas.delete('/produtos/:id', AuthAdmin, produtosController.excluir);
 // --- ROTAS DE ADMIN ---
 rotas.get('/carrinhos', AuthAdmin, carrinhoController.listarTodos);
 rotas.get('/produtos', AuthAdmin, produtosController.listar);
-rotas.get('/dashboard', AuthAdmin, adminController.getDashboardStats);
+rotas.get('/admin/dashboard', AuthAdmin, adminController.getDashboardStats);
 
 export default rotas
