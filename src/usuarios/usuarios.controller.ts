@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { db } from '../database/banco-mongo.js'
+import { getDb } from '../database/banco-mongo.js'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import { ObjectId } from 'bson'
@@ -22,10 +22,12 @@ class UsuariosController {
         }
         const usuario = { nome, idade, email, senha: senhaCriptografada, tipoUsuario }  
 
+        const { db } = await getDb();
         const resultado = await db.collection('usuarios').insertOne(usuario)
         res.status(201).json({nome,idade,email,_id: resultado.insertedId })
     }
     async listar(req: Request, res: Response) {
+        const { db } = await getDb();
         const usuarios = await db.collection('usuarios').find().toArray()
         const usuariosSemSenha = usuarios.map(({ senha, ...resto }) => resto)
         res.status(200).json(usuariosSemSenha)
@@ -36,6 +38,7 @@ class UsuariosController {
         if(!email || !senha) return res.status(400).json({mensagem:"Email e senha são obrigatórios!"})
     
         //Como verificar se o usuário tem acesso ou não?
+        const { db } = await getDb();
         const usuario = await db.collection('usuarios').findOne({email})
 
         if(!usuario) return res.status(401).json({mensagem:"Usuário Incorreto!"})

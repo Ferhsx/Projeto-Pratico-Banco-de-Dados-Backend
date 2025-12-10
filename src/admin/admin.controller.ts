@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
-import { db } from "../database/banco-mongo.js";
+import { getDb } from "../database/banco-mongo.js";
 
 class AdminController {
     
     getDashboardStats = async (req: Request, res: Response) => {
         try {
+            const { db } = await getDb();
             const carrinhosAtivos = await db.collection('carrinhos').countDocuments();
 
             const todosOsCarrinhos = await db.collection('carrinhos').find().toArray();

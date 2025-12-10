@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { ObjectId } from 'bson';
-import { db } from '../database/banco-mongo.js';
+import { getDb } from '../database/banco-mongo.js';
 
 interface ItemCarrinho {
     produtoId: string;
@@ -77,6 +77,7 @@ async function handleSuccessfulPayment(paymentIntent: Stripe.PaymentIntent) {
         }
 
         // 1. Buscar o carrinho
+        const { db } = await getDb();
         const carrinho = await db.collection<Carrinho>('carrinhos').findOne({ 
             _id: new ObjectId(carrinhoId) 
         });
@@ -100,10 +101,10 @@ async function handleSuccessfulPayment(paymentIntent: Stripe.PaymentIntent) {
         };
 
         // 2. Salvar o pedido no banco de dados
-        await db.collection('pedidos').insertOne(pedido);
+        const pedidoResult = await db.collection('pedidos').insertOne(pedido);
 
         // 3. Limpar o carrinho ou marcá-lo como finalizado
-        await db.collection<Carrinho>('carrinhos').updateOne(
+        const updateResult = await db.collection<Carrinho>('carrinhos').updateOne(
             { _id: new ObjectId(carrinhoId) },
             { 
                 $set: { 
@@ -114,6 +115,10 @@ async function handleSuccessfulPayment(paymentIntent: Stripe.PaymentIntent) {
                 }
             }
         );
+
+        if (!pedidoResult.acknowledged || !updateResult.acknowledged) {
+            throw new Error('Falha ao processar o pedido');
+        }
 
         console.log(`Pedido criado e carrinho finalizado para o usuário ${usuarioId}`);
 

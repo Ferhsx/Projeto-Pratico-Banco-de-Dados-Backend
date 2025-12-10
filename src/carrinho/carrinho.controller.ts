@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { ObjectId } from "bson";
-import { db } from "../database/banco-mongo.js";
+import { getDb } from "../database/banco-mongo.js";
 
 interface ItemCarrinho {
     produtoId: string;
@@ -44,6 +44,7 @@ class CarrinhoController {
                 return res.status(400).json({ mensagem: "Dados do item inválidos." });
             }
 
+            const { db } = await getDb();
             const produto = await db.collection("produtos").findOne({
                 _id: ObjectId.createFromHexString(produtoId)
             });
@@ -68,6 +69,7 @@ class CarrinhoController {
                     total: produto.preco * quantidade
                 };
 
+                const { db } = await getDb();
                 await db.collection("carrinhos").insertOne(novoCarrinho);
                 return res.status(201).json(novoCarrinho);
             }
@@ -124,6 +126,7 @@ class CarrinhoController {
                 return res.status(400).json({ mensagem: "ID do produto inválido." });
             }
 
+            const { db } = await getDb();
             const carrinho = await db.collection<Carrinho>("carrinhos").findOne({ usuarioId });
 
             if (!carrinho) {
@@ -144,6 +147,7 @@ class CarrinhoController {
             carrinho.dataAtualizacao = new Date();
 
             if (carrinho.itens.length === 0) {
+                const { db } = await getDb();
                 await db.collection("carrinhos").deleteOne({ usuarioId });
                 return res.status(200).json({ itens: [], total: 0 });
             }
@@ -174,6 +178,7 @@ class CarrinhoController {
                 return res.status(401).json({ mensagem: "Usuário não autenticado." });
             }
 
+            const { db } = await getDb();
             const carrinho = await db.collection<Carrinho>("carrinhos").findOne({ usuarioId });
 
             if (!carrinho) {
@@ -195,6 +200,7 @@ class CarrinhoController {
                 return res.status(401).json({ mensagem: "Usuário não autenticado." });
             }
 
+            const { db } = await getDb();
             const resultado = await db.collection("carrinhos").deleteOne({ usuarioId });
 
             if (resultado.deletedCount === 0) {
@@ -300,6 +306,7 @@ class CarrinhoController {
                 return res.status(400).json({ mensagem: "Dados inválidos para atualização." });
             }
 
+            const { db } = await getDb();
             const carrinho = await db.collection<Carrinho>("carrinhos").findOne({ usuarioId });
 
             if (!carrinho) {
