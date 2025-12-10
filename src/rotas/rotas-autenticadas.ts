@@ -26,20 +26,24 @@ rotas.patch('/alterarQuantidade', carrinhoController.atualizarQuantidade);
 
 // --- ROTA DE PAGAMENTO (NOVA) ---
 rotas.post('/criar-pagamento-cartao', async (req, res) => {
+    // 1. Receber o ID do método de pagamento (o token do cartão)
+    const { paymentMethodId } = req.body;
     const { db, client } = await getDb();
-    const session = client.startSession();
     
+    const session = client.startSession();
+
     try {
         await session.withTransaction(async () => {
             const usuarioId = (req as any).usuarioId;
-            if (!usuarioId) {
-                throw new Error('Usuário não autenticado.');
+            if (!usuarioId) throw new Error('Usuário não autenticado.');
+
+            // Validação simples
+            if (!paymentMethodId) {
+                throw new Error('Método de pagamento (cartão) não fornecido.');
             }
 
-            const { ObjectId } = await import('bson');
-
-            // 1. Buscar o carrinho do usuário
-            const carrinho = await db.collection('carrinhos').findOne({
+            // 2. Buscar o carrinho
+            const carrinho = await db.collection('carrinhos').findOne({ 
                 usuarioId,
                 status: { $ne: 'finalizado' }
             });
@@ -48,41 +52,38 @@ rotas.post('/criar-pagamento-cartao', async (req, res) => {
                 throw new Error('Carrinho vazio ou não encontrado.');
             }
 
-
-            // 2. Calcular o valor total
+            // 3. Calcular total
             const valorTotal = carrinho.itens.reduce((acc: number, item: any) => {
                 const preco = typeof item.precoUnitario === 'number' ? item.precoUnitario : (item.preco || 0);
                 const qtd = typeof item.quantidade === 'number' ? item.quantidade : (item.qtd || 1);
                 return acc + preco * qtd;
             }, 0);
 
-
-            if (valorTotal <= 0) {
-                throw new Error('Valor total inválido.');
-            }
-
-
-            // 3. Criar PaymentIntent no Stripe
+            // 4. Criar PaymentIntent no Stripe COM o cartão
             const stripe = new (await import('stripe')).default(process.env.STRIPE_SECRET_KEY || '');
+            
             const paymentIntent = await stripe.paymentIntents.create({
-                amount: Math.round(valorTotal * 100), // Converter para centavos
+                amount: Math.round(valorTotal * 100),
                 currency: 'brl',
+                payment_method: paymentMethodId,
+                confirm: true,
+                return_url: 'https://projeto-pratico-frameworks-frontend.vercel.app/pagamento/concluido',
+                automatic_payment_methods: {
+                    enabled: true,
+                    allow_redirects: 'never'
+                },
                 metadata: {
                     usuarioId,
                     carrinhoId: carrinho._id?.toString?.() || ''
-                },
-                payment_method_types: ['card'],
-                confirm: true,
-                return_url: req.body.returnUrl || 'http://localhost:3000/pagamento/sucesso'
+                }
             });
 
-
-            // 4. Criar registro do pedido
+            // 5. Criar registro do pedido
             const result = await db.collection('pedidos').insertOne({
                 usuarioId,
                 itens: carrinho.itens,
                 valorTotal: valorTotal,
-                status: 'pago',
+                status: paymentIntent.status === 'succeeded' ? 'pago' : 'pendente',
                 dataPagamento: new Date(),
                 metodoPagamento: 'cartao',
                 idPagamento: paymentIntent.id,
@@ -91,7 +92,7 @@ rotas.post('/criar-pagamento-cartao', async (req, res) => {
                 atualizadoEm: new Date()
             });
             
-            // 5. Marcar o carrinho como finalizado
+            // 6. Marcar o carrinho como finalizado
             await db.collection('carrinhos').updateOne(
                 { _id: carrinho._id },
                 { 
@@ -104,13 +105,12 @@ rotas.post('/criar-pagamento-cartao', async (req, res) => {
                 }
             );
 
-
-            // 6. Retornar sucesso
+            // 7. Retornar sucesso
             return res.status(200).json({
                 success: true,
-                pedidoId: result.insertedId,
-                paymentIntentId: paymentIntent.id,
-                valorTotal
+                orderId: result.insertedId,
+                clientSecret: paymentIntent.client_secret,
+                requiresAction: paymentIntent.status === 'requires_action'
             });
         });
     } catch (error) {
