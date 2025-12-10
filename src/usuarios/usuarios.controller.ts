@@ -40,7 +40,6 @@ class UsuariosController {
             email, 
             senha: senhaCriptografada, 
             tipoUsuario: 'comum', // Padrão seguro
-            criadoEm: new Date()
         };
 
         // Lógica para criar ADMIN
