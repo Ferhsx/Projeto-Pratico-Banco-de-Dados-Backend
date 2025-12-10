@@ -26,27 +26,23 @@ rotas.patch('/alterarQuantidade', carrinhoController.atualizarQuantidade);
 
 // --- ROTA DE PAGAMENTO (NOVA) ---
 rotas.post('/criar-pagamento-cartao', async (req, res) => {
-    const { client } = await getDb();
+    const { db, client } = await getDb();
     const session = client.startSession();
     
     try {
         await session.withTransaction(async () => {
             const usuarioId = (req as any).usuarioId;
-           if (!usuarioId) {
+            if (!usuarioId) {
                 throw new Error('Usuário não autenticado.');
             }
 
-
-            const db = client.db();
             const { ObjectId } = await import('bson');
 
-
             // 1. Buscar o carrinho do usuário
-            const carrinho = await db.collection('carrinhos').findOne({ 
+            const carrinho = await db.collection('carrinhos').findOne({
                 usuarioId,
-                    status: { $ne: 'finalizado' }
+                status: { $ne: 'finalizado' }
             });
-
 
             if (!carrinho || !Array.isArray(carrinho.itens) || carrinho.itens.length === 0) {
                 throw new Error('Carrinho vazio ou não encontrado.');

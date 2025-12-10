@@ -76,8 +76,19 @@ async function handleSuccessfulPayment(paymentIntent: Stripe.PaymentIntent) {
             return;
         }
 
-        // 1. Buscar o carrinho
         const { db } = await getDb();
+        
+        // 1. Verificar se o pedido já existe (Idempotência)
+        const pedidoExistente = await db.collection('pedidos').findOne({ 
+            idPagamento: paymentIntent.id 
+        });
+        
+        if (pedidoExistente) {
+            console.log(`Pedido já processado para o pagamento ${paymentIntent.id}. Ignorando webhook.`);
+            return;
+        }
+
+        // 2. Buscar o carrinho
         const carrinho = await db.collection<Carrinho>('carrinhos').findOne({ 
             _id: new ObjectId(carrinhoId) 
         });
