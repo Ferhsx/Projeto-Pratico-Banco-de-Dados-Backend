@@ -1,6 +1,7 @@
 import {Router} from 'express';
 import AuthAdmin from '../middlewares/authAdmin.js';
 import Auth from '../middlewares/auth.js';
+import adminController from '../admin/admin.controller.js';
 import carrinhoController from '../carrinho/carrinho.controller.js';
 import produtosController from '../produtos/produtos.controller.js';
 import Stripe from 'stripe';
@@ -137,6 +138,7 @@ rotas.delete('/produtos/:id', AuthAdmin, produtosController.excluir);
 
 // --- ROTAS DE ADMIN ---
 rotas.get('/carrinhos', AuthAdmin, carrinhoController.listarTodos);
-
+rotas.get('/produtos', AuthAdmin, produtosController.listar);
+rotas.get('/dashboard', AuthAdmin, adminController.getDashboardStats);
 
 export default rotas
